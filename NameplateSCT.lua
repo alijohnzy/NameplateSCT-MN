@@ -239,6 +239,7 @@ local defaults = {
 
 		useOffTargetAppearance = true,
 		displayOffTargetText = true,
+		onlyEngagedUnits = false,
 		offTargetFormatting = {
 			size = 15,
 			alpha = 0.5,
@@ -1027,6 +1028,18 @@ function NameplateSCT:NPCFilterAllows(unit)
 	return true
 end
 
+-- UNIT_COMBAT carries no source, so an enemy someone else is fighting reports their damage
+-- just as readily as yours. Threat is the closest available stand-in for "this is my fight":
+-- UnitThreatSituation comes back nil for a unit the player has no threat on. It cannot
+-- separate two attackers on the same enemy, which is why this is opt-in.
+local function playerIsFighting(unit)
+	local status = UnitThreatSituation("player", unit)
+	if (not isReadable(status)) then
+		return true -- no way to tell, so leave the hit alone
+	end
+	return status ~= nil
+end
+
 -- Midnight 12.0+ data source, replacing COMBAT_LOG_EVENT_UNFILTERED.
 --
 -- UNIT_COMBAT describes what happened *to* a unit: (unit, action, flagText, amount, schoolMask).
@@ -1056,6 +1069,9 @@ function NameplateSCT:UNIT_COMBAT(_, unit, action, flagText, amount, schoolMask)
 		-- A mob that is also your target/focus/mouseover fires this event once per unit
 		-- token, so only the nameplate token is taken - the one NSCT can anchor to anyway.
 		if (not strmatch(unit, "^nameplate%d+$")) then
+			return
+		end
+		if (self.db.global.onlyEngagedUnits and not playerIsFighting(unit)) then
 			return
 		end
 		if (not self:NPCFilterAllows(unit)) then
@@ -2261,6 +2277,17 @@ local menu = {
 					set = function(_, newValue) NameplateSCT.db.global.displayOffTargetText = newValue end,
 					order = 99,
 					width = "full",
+				},
+
+				onlyEngagedUnits = {
+					type = 'toggle',
+					name = L["Only Units You Are Fighting"],
+					desc = L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Enemies you share with someone else still show their damage as well as yours."],
+					get = function() return NameplateSCT.db.global.onlyEngagedUnits end,
+					set = function(_, newValue) NameplateSCT.db.global.onlyEngagedUnits = newValue end,
+					order = 99.5,
+					width = "full",
+					hidden = not isMidnight, -- every other flavor filters by source in CombatFilter
 				},
 
 				useOffTargetAppearance = {

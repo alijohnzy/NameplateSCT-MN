@@ -38,6 +38,8 @@ L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc di
 L["Remove Icon borders"] = true
 L["Zoom a bit into the icon to remove default blizzard border"] = true
 L["Display Off-Target Text"] = true
+L["Only Units You Are Fighting"] = true
+L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Enemies you share with someone else still show their damage as well as yours."] = true
 L["Display Overkill"] = true
 L["Display your overkill for a target over your own nameplate"] = true
 L["Do Not Truncate"] = true
