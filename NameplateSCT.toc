@@ -1,4 +1,4 @@
-## Interface: 110207, 120000
+## Interface: 110207, 120000, 120100
 ## Version: @project-version@
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait

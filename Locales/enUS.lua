@@ -1,6 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "enUS", true)
 
-L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."] = true
+L["Midnight removed the combat log for addons. NameplateSCT now reads damage straight from each unit, which means numbers show for all damage taken by an enemy, not only yours, and spell icons, the spell filter and overkill are unavailable."] = true
 L["If you want to enable or disable the blizzard SCT you can do so here"] = true
 L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = true
 L["%s (A: %s)"] = true -- A for Absorb
