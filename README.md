@@ -28,6 +28,11 @@ no way to tell who dealt a hit or with which spell. That costs:
   Solo this is invisible; in a group you will see other players' hits too, and **Hide Small
   Hits** measures against that combined stream, so someone else's big hits can push your
   smaller ones under the bar.
+
+  There is no way to recover the attacker, but **Appearance/Offsets → Only Units You Are
+  Fighting** cuts most of the noise by dropping enemies you have no threat on, so other
+  people's pulls go quiet while your own fights keep every number. It cannot separate two
+  players hitting the same enemy, so it is off by default.
 - **Spell icons** — nothing to look an icon up by.
 - **The spell filter** — the NPC filter still works. Both remain available on older flavors.
 - **Overkill**, and the separate auto attack / ability animation split.
