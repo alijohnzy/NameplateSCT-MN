@@ -25,7 +25,9 @@ variance and animation option.
 no way to tell who dealt a hit or with which spell. That costs:
 
 - **Source attribution** — numbers appear for *all* damage a target takes, not only yours.
-  Solo this is invisible; in a group you will see other players' hits too.
+  Solo this is invisible; in a group you will see other players' hits too, and **Hide Small
+  Hits** measures against that combined stream, so someone else's big hits can push your
+  smaller ones under the bar.
 - **Spell icons** — nothing to look an icon up by.
 - **The spell filter** — the NPC filter still works. Both remain available on older flavors.
 - **Overkill**, and the separate auto attack / ability animation split.
@@ -44,8 +46,15 @@ Midnight squished damage numbers by roughly an order of magnitude. If you had
 (say `200000`), it now sits above your biggest crit and hides *every* number, which looks
 exactly like the addon being broken. Set it to `0` if nothing appears.
 
-Worth checking at the same time: **Hide Small Hits**, and **Appearance/Offsets → Target
-Strata** — `Background` draws the text behind your nameplates.
+Worth checking at the same time:
+
+- **Hide Small Hits** hides anything under half the running average of recent damage. Big
+  crits raise that average, so this can swallow your smaller hits — Elemental Overloads, DoT
+  ticks, off-hand swings — while the big ones still show. Turn it off if numbers seem to
+  appear only some of the time.
+- **Appearance/Offsets → Target Strata** — `Background` draws the text behind your nameplates.
+- If two hits land in the same instant they are drawn on top of each other and read as one
+  number. **Appearance/Offsets → X/Y Variance** scatters them apart.
 
 ## Commands
 
