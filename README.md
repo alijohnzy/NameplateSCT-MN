@@ -31,8 +31,11 @@ no way to tell who dealt a hit or with which spell. That costs:
 
   There is no way to recover the attacker, but **Appearance/Offsets → Only Units You Are
   Fighting** cuts most of the noise by dropping enemies you have no threat on, so other
-  people's pulls go quiet while your own fights keep every number. It cannot separate two
-  players hitting the same enemy, so it is off by default.
+  people's pulls go quiet while your own fights keep every number. Your target, focus and
+  pet's target always count regardless of threat. It cannot separate two players hitting the
+  same enemy, and training dummies never build a threat table — so on a dummy only the one
+  you have selected shows, and multi-dummy AoE testing wants this switched off. Off by
+  default.
 - **Spell icons** — nothing to look an icon up by.
 - **The spell filter** — the NPC filter still works. Both remain available on older flavors.
 - **Overkill**, and the separate auto attack / ability animation split.

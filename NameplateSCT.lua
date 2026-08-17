@@ -1033,6 +1033,16 @@ end
 -- UnitThreatSituation comes back nil for a unit the player has no threat on. It cannot
 -- separate two attackers on the same enemy, which is why this is opt-in.
 local function playerIsFighting(unit)
+	-- Whatever you have selected is your fight by definition. This is not just a shortcut:
+	-- training dummies never build a threat table, so threat alone would hide every number
+	-- on the one target people test against.
+	if (UnitIsUnit(unit, "target") or UnitIsUnit(unit, "focus")) then
+		return true
+	end
+	if (UnitExists("pet") and UnitIsUnit(unit, "pettarget")) then
+		return true
+	end
+
 	local status = UnitThreatSituation("player", unit)
 	if (not isReadable(status)) then
 		return true -- no way to tell, so leave the hit alone
@@ -2282,7 +2292,7 @@ local menu = {
 				onlyEngagedUnits = {
 					type = 'toggle',
 					name = L["Only Units You Are Fighting"],
-					desc = L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Enemies you share with someone else still show their damage as well as yours."],
+					desc = L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Your target, focus and pet's target always count, so training dummies still work. Enemies you share with someone else still show their damage as well as yours."],
 					get = function() return NameplateSCT.db.global.onlyEngagedUnits end,
 					set = function(_, newValue) NameplateSCT.db.global.onlyEngagedUnits = newValue end,
 					order = 99.5,
