@@ -46,6 +46,30 @@ local function isReadable(value)
 	return false
 end
 
+-- UnitIsUnit and UnitIsDead hand back secret booleans on Midnight, and tainted code may not
+-- even test one for truth, so every unit check on combat data goes through these.
+local function unitIs(unit, otherUnit)
+	local result = UnitIsUnit(unit, otherUnit)
+	if (not isReadable(result)) then
+		return false
+	end
+	return result == true
+end
+
+-- The literal token answers this without asking the client, which matters when UnitIsUnit
+-- comes back secret and unusable.
+local function isPlayerUnit(unit)
+	return unit == "player" or unitIs(unit, "player")
+end
+
+local function unitIsDead(unit)
+	local result = UnitIsDead(unit)
+	if (not isReadable(result)) then
+		return false
+	end
+	return result == true
+end
+
 -- Renders a value that may be secret. string.format() is the only way to build a string
 -- around a secret; if even that is refused, hand the raw value to SetText() untouched.
 local function formatSecret(value)
@@ -718,7 +742,7 @@ local function AnimationOnUpdate()
 			else
 				local isTarget = false
 				if fontString.unit then
-					isTarget = UnitIsUnit(fontString.unit, "target")
+					isTarget = unitIs(fontString.unit, "target")
 				else
 					fontString.unit = "player"
 				end
@@ -797,7 +821,7 @@ local function AnimationOnUpdate()
 					-- TODO
 				end
 
-				if ((not UnitIsDead(fontString.unit) or fontString.unit == "player") and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
+				if ((not unitIsDead(fontString.unit) or fontString.unit == "player") and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
 					if fontString.animation == "fireworks" then
 						-- -- Fireworks effect ignores global offset and random jitter, always relative to center
 						fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", xOffset, yOffset)
@@ -1036,10 +1060,10 @@ local function playerIsFighting(unit)
 	-- Whatever you have selected is your fight by definition. This is not just a shortcut:
 	-- training dummies never build a threat table, so threat alone would hide every number
 	-- on the one target people test against.
-	if (UnitIsUnit(unit, "target") or UnitIsUnit(unit, "focus")) then
+	if (unitIs(unit, "target") or unitIs(unit, "focus")) then
 		return true
 	end
-	if (UnitExists("pet") and UnitIsUnit(unit, "pettarget")) then
+	if (UnitExists("pet") and unitIs(unit, "pettarget")) then
 		return true
 	end
 
@@ -1066,7 +1090,16 @@ function NameplateSCT:UNIT_COMBAT(_, unit, action, flagText, amount, schoolMask)
 		self:DebugUnitCombat(unit, action, flagText, amount, schoolMask)
 	end
 
-	local onPlayer = UnitIsUnit(unit, "player")
+	-- Only the player and nameplate tokens are usable. Everything else this fires for -
+	-- target, targettarget, softenemy, party1 and so on - either duplicates a nameplate
+	-- token or has nowhere to anchor, so it goes before any of it is inspected.
+	local isNameplate = strmatch(unit, "^nameplate%d+$")
+	if (not isNameplate and unit ~= "player") then
+		return
+	end
+
+	-- the personal nameplate arrives as a nameplate token, so it still has to be asked
+	local onPlayer = isPlayerUnit(unit)
 
 	if (onPlayer) then
 		if (not self.db.global.personal) then
@@ -1074,11 +1107,6 @@ function NameplateSCT:UNIT_COMBAT(_, unit, action, flagText, amount, schoolMask)
 		end
 	else
 		if (self.db.global.personalOnly and self.db.global.personal) then
-			return
-		end
-		-- A mob that is also your target/focus/mouseover fires this event once per unit
-		-- token, so only the nameplate token is taken - the one NSCT can anchor to anyway.
-		if (not strmatch(unit, "^nameplate%d+$")) then
 			return
 		end
 		if (self.db.global.onlyEngagedUnits and not playerIsFighting(unit)) then
@@ -1219,7 +1247,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	local absorbed = absorbed or 0
 	-- guid comes from the combat log, unit from UNIT_COMBAT; exactly one of them is set.
 	unit = unit or guidToUnit[guid]
-	local onPlayer = (guid ~= nil and guid == playerGUID) or (unit ~= nil and UnitIsUnit(unit, "player"))
+	local onPlayer = (guid ~= nil and guid == playerGUID) or (unit ~= nil and isPlayerUnit(unit))
 	local readableAmount = isReadable(amount) and isReadable(absorbed)
 
 	-- Hide small hits based on threshold
@@ -1250,7 +1278,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 		return
 	end
 
-	local isTarget = unit and UnitIsUnit(unit, "target")
+	local isTarget = unit and unitIs(unit, "target")
 
 	if (not isTarget and not self.db.global.displayOffTargetText) then
 		return
@@ -1332,8 +1360,8 @@ end
 function NameplateSCT:MissEvent(guid, spellName, missType, spellId, unit)
 	local text, animation, pow, size, alpha, color
 	unit = unit or guidToUnit[guid]
-	local onPlayer = (guid ~= nil and guid == playerGUID) or (unit ~= nil and UnitIsUnit(unit, "player"))
-	local isTarget = unit and UnitIsUnit(unit, "target")
+	local onPlayer = (guid ~= nil and guid == playerGUID) or (unit ~= nil and isPlayerUnit(unit))
+	local isTarget = unit and unitIs(unit, "target")
 
 	if not onPlayer then
 		animation = self.db.global.animations.miss
@@ -1380,7 +1408,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 	-- with no nameplate to anchor to, personal text falls back to the "player" sentinel,
 	-- which Animate() resolves to UIParent
 	if (not nameplate) then
-		if ((guid ~= nil and guid == playerGUID) or (unit ~= nil and UnitIsUnit(unit, "player"))) then
+		if ((guid ~= nil and guid == playerGUID) or (unit ~= nil and isPlayerUnit(unit))) then
 			nameplate = "player"
 		else
 			return
@@ -1462,7 +1490,7 @@ function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow
 
 	-- see DisplayText: personal text without a nameplate anchors to UIParent
 	if (not nameplate) then
-		if ((guid ~= nil and guid == playerGUID) or (unit ~= nil and UnitIsUnit(unit, "player"))) then
+		if ((guid ~= nil and guid == playerGUID) or (unit ~= nil and isPlayerUnit(unit))) then
 			nameplate = "player"
 		else
 			return
