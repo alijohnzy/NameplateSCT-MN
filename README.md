@@ -5,7 +5,8 @@ nameplate of the thing you hit, styled how you want them, with per-school colors
 sizing and a handful of animations.
 
 This fork restores functionality on **Midnight (12.x)**, where the addon previously disabled
-itself. Everything from Vanilla through The War Within behaves exactly as before.
+itself, and adds **Forever** support as an untested beta. Everything from Vanilla through The
+War Within behaves exactly as before.
 
 Download and unzip into your `World of Warcraft\_retail_\Interface\AddOns` folder, or grab it
 from [CurseForge](https://www.curseforge.com/wow/addons/nameplate-scrolling-combat-text).
@@ -64,6 +65,27 @@ Worth checking at the same time:
 - If two hits land in the same instant they are drawn on top of each other and read as one
   number. **Appearance/Offsets → X/Y Variance** scatters them apart.
 
+## Forever (beta)
+
+**Untested.** Forever support was written without beta access, so it has never run on a live
+client. It is here to be tried and reported on, not because it has been verified. If numbers
+do not appear, `/nsct debug` will say whether the addon is receiving events at all.
+
+Forever is vanilla-era content on the Midnight engine, and it inherited Midnight's addon
+restrictions along with it — no combat log, and secret combat values. Everything in the
+Midnight section above therefore applies here as well: damage, criticals, schools and every
+avoidance type work, while source attribution, spell icons, the spell filter, overkill and the
+auto attack / ability split are not available, and **Only Units You Are Fighting** is the
+closest thing to filtering by attacker.
+
+The flavor is detected from the interface version — Forever reports `16xxx`, off game version
+1.60. `WOW_PROJECT_ID` is deliberately not used: Forever reported `WOW_PROJECT_MAINLINE` early
+in the beta and changed to `18` partway through it.
+
+`_Camelot` is Blizzard's working name for the Forever TOC suffix and may change before launch.
+If it does, the client stops loading `NameplateSCT_Camelot.toc` and the file needs renaming —
+the Lua side keys off the interface version, so it keeps working either way.
+
 ## Commands
 
 - `/nsct` — open the options panel
@@ -76,6 +98,7 @@ Worth checking at the same time:
 | Client | TOC |
 | --- | --- |
 | Midnight / retail | `NameplateSCT.toc` |
+| Forever *(beta, untested)* | `NameplateSCT_Camelot.toc` |
 | Mists of Pandaria | `NameplateSCT_Mists.toc` |
 | Cataclysm | `NameplateSCT_Cata.toc` |
 | Wrath of the Lich King | `NameplateSCT_Wrath.toc` |

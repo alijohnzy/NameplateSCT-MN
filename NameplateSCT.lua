@@ -17,12 +17,30 @@ NameplateSCT.frame = CreateFrame("Frame", nil, UIParent)
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture or GetSpellTexture
 local _, _, _, build = GetBuildInfo()
 local isMidnight = build >= 120000
-local blizzardCvar = isMidnight and "floatingCombatTextCombatDamage_v2" or "floatingCombatTextCombatDamage"
 
--- Midnight (12.0) took COMBAT_LOG_EVENT_UNFILTERED away from addons entirely, so every
--- flavor from Vanilla through The War Within runs the combat log pipeline below, while
--- Midnight runs off UNIT_COMBAT instead. See the UNIT_COMBAT handler for what that costs.
+-- Forever (Classic+) is vanilla-era content running on the Midnight engine, and it inherited
+-- Midnight's addon restrictions along with it. It is identified by its interface version:
+-- Forever reports 16xxx off game version 1.60, nothing on the Classic line comes anywhere near
+-- that, and WOW_PROJECT_ID is no help because Forever reported WOW_PROJECT_MAINLINE at first
+-- and then changed to 18 partway through the beta. Written without beta access, so untested.
+local isForever = build >= 16000 and build < 17000
+
+-- Midnight (12.0) took COMBAT_LOG_EVENT_UNFILTERED away from addons entirely and Forever shipped
+-- the same way, so those two run off UNIT_COMBAT while every flavor from Vanilla through The War
+-- Within runs the combat log pipeline below. See the UNIT_COMBAT handler for what that costs.
 --
+-- Both halves of this test earn their place. The reader function is gone on those clients, and
+-- merely registering the event is a protected action there that fires ADDON_ACTION_FORBIDDEN and
+-- taints the addon, so a client that kept the reader but restricted the event must not reach
+-- RegisterEvent either. The flavor checks also cover Forever renumbering past 16xxx.
+local hasCombatLog = CombatLogGetCurrentEventInfo ~= nil and not isMidnight and not isForever
+
+-- Midnight renamed the Blizzard floating combat text cvar. Forever runs the same engine behind a
+-- Classic-era interface version, so ask the client which one it has rather than infer it.
+local blizzardCvar = GetCVar("floatingCombatTextCombatDamage_v2") ~= nil
+	and "floatingCombatTextCombatDamage_v2"
+	or "floatingCombatTextCombatDamage"
+
 -- 12.0 also introduced "secret" values: combat data the client hands out but that tainted
 -- code may not read. Comparing, indexing, concatenating or doing arithmetic with one
 -- raises a Lua error, though string.format() and FontString:SetText() still render it.
@@ -604,10 +622,10 @@ function NameplateSCT:OnEnable()
 	self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 
-	if isMidnight then
-		self:RegisterEvent("UNIT_COMBAT")
-	else
+	if hasCombatLog then
 		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	else
+		self:RegisterEvent("UNIT_COMBAT")
 	end
 
 	self.db.global.enabled = true
@@ -1074,7 +1092,7 @@ local function playerIsFighting(unit)
 	return status ~= nil
 end
 
--- Midnight 12.0+ data source, replacing COMBAT_LOG_EVENT_UNFILTERED.
+-- Midnight and Forever data source, replacing COMBAT_LOG_EVENT_UNFILTERED.
 --
 -- UNIT_COMBAT describes what happened *to* a unit: (unit, action, flagText, amount, schoolMask).
 -- Amount, criticals, damage school and every avoidance type still arrive, so sizing, coloring
@@ -2320,12 +2338,12 @@ local menu = {
 				onlyEngagedUnits = {
 					type = 'toggle',
 					name = L["Only Units You Are Fighting"],
-					desc = L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Your target, focus and pet's target always count, so training dummies still work. Enemies you share with someone else still show their damage as well as yours."],
+					desc = L["This client does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Your target, focus and pet's target always count, so training dummies still work. Enemies you share with someone else still show their damage as well as yours."],
 					get = function() return NameplateSCT.db.global.onlyEngagedUnits end,
 					set = function(_, newValue) NameplateSCT.db.global.onlyEngagedUnits = newValue end,
 					order = 99.5,
 					width = "full",
-					hidden = not isMidnight, -- every other flavor filters by source in CombatFilter
+					hidden = hasCombatLog, -- every other flavor filters by source in CombatFilter
 				},
 
 				useOffTargetAppearance = {
@@ -2470,12 +2488,18 @@ local menu = {
 	},
 }
 
-if isMidnight then
-	-- Midnight runs on UNIT_COMBAT, which reports damage per unit with no source and no
-	-- spell. The options that depend on either are hidden rather than left as dead switches.
-	menu.args.midnightNotice = {
+if not hasCombatLog then
+	-- Midnight and Forever run on UNIT_COMBAT, which reports damage per unit with no source
+	-- and no spell. The options that depend on either are hidden rather than left as dead
+	-- switches.
+	local notice = L["This client does not give addons the combat log. NameplateSCT now reads damage straight from each unit, which means numbers show for all damage taken by an enemy, not only yours, and spell icons, the spell filter and overkill are unavailable."]
+	if isForever then
+		notice = notice .. " " .. L["Forever support is beta: it was built without beta access and has never run on a live client, so please report anything that looks wrong."]
+	end
+
+	menu.args.noCombatLogNotice = {
 		type = 'description',
-		name = "|cFFFFCC00"..L["Midnight removed the combat log for addons. NameplateSCT now reads damage straight from each unit, which means numbers show for all damage taken by an enemy, not only yours, and spell icons, the spell filter and overkill are unavailable."].."|r",
+		name = "|cFFFFCC00"..notice.."|r",
 		order = 0.5,
 		width = "full",
 	}
@@ -2549,7 +2573,7 @@ local filters = {
 	},
 }
 
-if isMidnight then
+if not hasCombatLog then
 	-- the NPC filter still works off the nameplate unit's guid, the spell filter has nothing
 	-- to match against
 	filters.args.spellList.hidden = true

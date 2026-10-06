@@ -1,6 +1,7 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "enUS", true)
 
-L["Midnight removed the combat log for addons. NameplateSCT now reads damage straight from each unit, which means numbers show for all damage taken by an enemy, not only yours, and spell icons, the spell filter and overkill are unavailable."] = true
+L["This client does not give addons the combat log. NameplateSCT now reads damage straight from each unit, which means numbers show for all damage taken by an enemy, not only yours, and spell icons, the spell filter and overkill are unavailable."] = true
+L["Forever support is beta: it was built without beta access and has never run on a live client, so please report anything that looks wrong."] = true
 L["If you want to enable or disable the blizzard SCT you can do so here"] = true
 L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = true
 L["%s (A: %s)"] = true -- A for Absorb
@@ -39,7 +40,7 @@ L["Remove Icon borders"] = true
 L["Zoom a bit into the icon to remove default blizzard border"] = true
 L["Display Off-Target Text"] = true
 L["Only Units You Are Fighting"] = true
-L["Midnight does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Your target, focus and pet's target always count, so training dummies still work. Enemies you share with someone else still show their damage as well as yours."] = true
+L["This client does not say who dealt a hit, so numbers appear on every enemy taking damage nearby. This drops the ones you have no threat on, leaving your own fights. Your target, focus and pet's target always count, so training dummies still work. Enemies you share with someone else still show their damage as well as yours."] = true
 L["Display Overkill"] = true
 L["Display your overkill for a target over your own nameplate"] = true
 L["Do Not Truncate"] = true
